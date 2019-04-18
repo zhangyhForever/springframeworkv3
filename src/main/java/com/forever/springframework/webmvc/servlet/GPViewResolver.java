@@ -31,4 +31,8 @@ public class GPViewResolver {
         File templateFile = new File((templateRootDir.getPath()+"/"+viewName).replaceAll("/+","/"));
         return new GPView(templateFile);
     }
+
+    public String getViewName() {
+        return this.viewName;
+    }
 }

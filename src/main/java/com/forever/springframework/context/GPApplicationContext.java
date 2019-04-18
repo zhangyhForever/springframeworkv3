@@ -9,6 +9,7 @@ import com.forever.springframework.beans.config.GPBeanDefinition;
 import com.forever.springframework.beans.config.GPBeanPostProcessor;
 import com.forever.springframework.beans.support.GPBeanDefinitionReader;
 import com.forever.springframework.beans.support.GPDefaultListableBeanFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+@Slf4j
 public class GPApplicationContext extends GPDefaultListableBeanFactory implements GPBeanFactory {
 
     private String[] configLocations;
@@ -96,15 +98,14 @@ public class GPApplicationContext extends GPDefaultListableBeanFactory implement
         try{
             Object instance = null;
             Class<?> clazz = Class.forName(className);
-            if(!clazz.isAnnotationPresent(GPController.class) && !clazz.isAnnotationPresent(GPService.class)){
-                return null;
-            }
+
             //单例直接取出对象
             if(this.singletonBeanCacheMap.containsKey(beanName)){
                 instance = this.singletonBeanCacheMap.get(beanName);
             }else{
                 instance = clazz.newInstance();
                 this.singletonBeanCacheMap.put(beanName, instance);
+                log.info(this.getClass()+"创建对象"+instance);
             }
             return instance;
         } catch (Exception e){
@@ -131,6 +132,7 @@ public class GPApplicationContext extends GPDefaultListableBeanFactory implement
             field.setAccessible(true);
             try {
                 field.set(beanName, this.beanWrapperMap.get(beanName).getWrapperInstance());
+                log.info(beanName+"注入实例"+this.beanWrapperMap.get(beanName).getWrapperInstance());
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }

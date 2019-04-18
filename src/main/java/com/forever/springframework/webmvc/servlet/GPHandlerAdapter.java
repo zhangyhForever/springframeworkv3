@@ -15,7 +15,7 @@ import java.util.Map;
  * @Author: zhang
  * @Date: 2019/4/14
  */
-public class GPHandlerAdepter {
+public class GPHandlerAdapter {
 
     public boolean supports(Object handler){
         return handler instanceof GPHandlerMapping;

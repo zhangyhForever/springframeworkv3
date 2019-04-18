@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,7 +34,7 @@ public class GPDispatcherServlet extends HttpServlet {
 
     private List<GPHandlerMapping> handlerMappings = new ArrayList<GPHandlerMapping>();
 
-    private Map<GPHandlerMapping, GPHandlerAdepter> handlerAdapters = new HashMap<GPHandlerMapping, GPHandlerAdepter>();
+    private Map<GPHandlerMapping, GPHandlerAdapter> handlerAdapters = new HashMap<GPHandlerMapping, GPHandlerAdapter>();
 
     private List<GPViewResolver> viewResolvers = new ArrayList<GPViewResolver>();
 
@@ -52,26 +53,35 @@ public class GPDispatcherServlet extends HttpServlet {
     }
 
     private void doDispatcher(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+        //获得handlerMapping(封装的url和method映射关系)
         GPHandlerMapping handler = getHandler(req);
         if(handler == null){
             processDispatchResult(req, resp, new GPModelAndView("404"));
             return;
         }
 
-        GPHandlerAdepter ha = handlerAdapters.get(handler);
+        //从handlerAdapters中根据handlerMapping找到对应的handlerAdapter
+        GPHandlerAdapter ha = handlerAdapters.get(handler);
 
+        //将handlerMapping交给handlerAdapter处理(将请求转换成方法的执行)，
+        //并返回一个ModelAndView(主要封装返回的参数以及页面名称)
         GPModelAndView mv = ha.handle(req, resp, handler);
 
+        //渲染页面(根据ModelAndView找到前台页面，并赋值给页面中的参数)，并返回结果
         processDispatchResult(req, resp, mv);
 
 
     }
 
+    /**
+     * 根据视图名称找到对应的html文件，并将页面中的参数赋值（也就是渲染）返回
+     * @param req
+     * @param resp
+     * @param mv
+     * @throws Exception
+     */
     private void processDispatchResult(HttpServletRequest req, HttpServletResponse resp, GPModelAndView mv) throws Exception {
         if(null == mv){
-            return;
-        }
-        if(this.viewResolvers.isEmpty()){
             return;
         }
         if(this.viewResolvers != null){
@@ -104,6 +114,7 @@ public class GPDispatcherServlet extends HttpServlet {
     @Override
     public void init(ServletConfig config) throws ServletException {
         GPApplicationContext context = new GPApplicationContext(config.getInitParameter(LOCATION));
+        log.info("配置文件位置====="+config.getInitParameter(LOCATION));
         initStrategies(context);
     }
 
@@ -121,7 +132,11 @@ public class GPDispatcherServlet extends HttpServlet {
         * @Date: 2019/4/14
         */
         initHandlerMappings(context);
-        //动态匹配method参数值
+        /**
+         * @Description:  请求参数和方法参数匹配
+         * @Author: zhang
+         * @Date: 2019/4/14
+         */
         initHandlerAdapters(context);
         //异常处理
         initHandlerExceptionResolvers(context);
@@ -167,14 +182,14 @@ public class GPDispatcherServlet extends HttpServlet {
                 Pattern regex = Pattern.compile(baseUrl + methodUrl);
                 GPHandlerMapping handlerMapping = new GPHandlerMapping(regex, controller, method);
                 handlerMappings.add(handlerMapping);
-                log.info("Mapping===="+regex+"--->"+method);
+                log.info(regex+"==Mapping====>"+method);
             }
         }
     }
 
     private void initHandlerAdapters(GPApplicationContext context) {
         for(GPHandlerMapping handlerMapping: this.handlerMappings){
-            this.handlerAdapters.put(handlerMapping, new GPHandlerAdepter());
+            this.handlerAdapters.put(handlerMapping, new GPHandlerAdapter());
         }
     }
 
@@ -185,12 +200,9 @@ public class GPDispatcherServlet extends HttpServlet {
      */
     private void initViewResolvers(GPApplicationContext context) {
         String templateRoot = context.getConfig().getProperty("templateRoot");
-        String templateRootPath = this.getClass().getClassLoader().getResource(templateRoot).getPath();
-        File templateRootDir = new File(templateRootPath);
-        for(File file: templateRootDir.listFiles()){
-            viewResolvers.add(new GPViewResolver(file.getPath()));
-        }
+
     }
+
 
     private void initRequestToViewNameTranslator(GPApplicationContext context) {
 

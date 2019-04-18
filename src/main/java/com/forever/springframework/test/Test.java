@@ -1,31 +1,26 @@
 package com.forever.springframework.test;
 
-import com.forever.springframework.test.controller.ActionController;
+import com.forever.springframework.test.service.ActionService;
+import lombok.extern.slf4j.Slf4j;
 
-import java.lang.reflect.Field;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 
 /**
  * @Description:
  * @Author: zhang
  * @Date: 2019/4/14
  */
+
+@Slf4j
 public class Test {
 
-    public static void main(String[] args) {
-       /* GPBeanDefinitionReader reader = new GPBeanDefinitionReader("application.properties");
-        URL url = reader.getClass().getResource("/" + "com.forever.com.forever.springframework".replaceAll("\\.","/"));
-        System.out.println(url.getPath());
-        GPApplicationContext context = new GPApplicationContext("classpath:application.properties");
-        Object bean = context.getBean(ActionController.class);
-        System.out.println(bean);*/
-       /* Field[] fields = ActionController.class.getDeclaredFields();
-        System.out.println("hahahaaha");
-        for(Field field: fields){
-            System.out.println(field.getType());
-        }*/
-
-        System.out.println(Test.class.getClassLoader().getResource(""));
+    public static void main(String[] args) throws IllegalAccessException, InstantiationException, URISyntaxException {
+        ActionService actionService = new ActionService();
+        String resource = actionService.getClass().getResource("/").getPath();
+        File file = new File(new File(resource).getParentFile().getPath()).getParentFile();
+        System.out.println(file.getPath());
     }
 }

@@ -1,6 +1,9 @@
 package com.forever.springframework.beans.support;
 
+import com.forever.springframework.annotation.GPController;
+import com.forever.springframework.annotation.GPService;
 import com.forever.springframework.beans.config.GPBeanDefinition;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,7 +18,7 @@ import java.util.Properties;
  * @Author: zhang
  * @Date: 2019/4/12
  */
-
+@Slf4j
 public class GPBeanDefinitionReader {
 
     private final String DEFAULT_PACKAGE = "package";
@@ -54,8 +57,7 @@ public class GPBeanDefinitionReader {
     }
 
     private void doScanner(String packageName) {
-        URL url = this.getClass().getResource("/"+packageName.replaceAll("\\.","/"));
-        System.out.println("classes文件路径为======="+url.getPath());
+        URL url = this.getClass().getClassLoader().getResource("/"+packageName.replaceAll("\\.","/"));
         File classPath = new File(url.getFile());
         for(File file: classPath.listFiles()){
             if(file.isDirectory()){
@@ -65,9 +67,9 @@ public class GPBeanDefinitionReader {
                 continue;
             }
             String className = (packageName + "." + file.getName().replace(".class",""));
-            System.out.println("扫描到的类全名=========="+className);
             registerBeanClasses.add(className);
         }
+        log.info("=======doScanner完成==========");
     }
 
     public List<GPBeanDefinition> loadBeanDefinition(){
@@ -79,16 +81,20 @@ public class GPBeanDefinitionReader {
             }
             result.add(beanDefinition);
         }
+        log.info("============loadBeanDefinition完成===========");
         return result;
     }
 
     private GPBeanDefinition doLoadBeanDefinition(String className) {
         try{
             Class<?> clazz = Class.forName(className);
-            if(!clazz.isInterface()){
+            if(!clazz.isInterface()
+                    && (clazz.isAnnotationPresent(GPController.class)
+                    || clazz.isAnnotationPresent(GPService.class))){
                 GPBeanDefinition beanDefinition = new GPBeanDefinition();
                 beanDefinition.setBeanClassName(className);
                 beanDefinition.setFactoryBeanName(toLowerFirstCase(clazz.getSimpleName()));
+                log.info(beanDefinition.getBeanClassName()+" 注册名====>"+beanDefinition.getFactoryBeanName());
                 return beanDefinition;
             }
         }catch (Exception e){
