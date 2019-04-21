@@ -1,0 +1,20 @@
+<component name="ArtifactManager">
+  <artifact type="exploded-war" name="springframeworkv3">
+    <output-path>$PROJECT_DIR$/out/artifacts/springframeworkv3</output-path>
+    <root id="root">
+      <element id="javaee-facet-resources" facet="springframeworkv3/web/Web" />
+      <element id="directory" name="WEB-INF">
+        <element id="directory" name="classes">
+          <element id="module-output" name="springframeworkv3" />
+          <element id="dir-copy" path="$PROJECT_DIR$/src/main/resources" />
+        </element>
+        <element id="directory" name="lib">
+          <element id="library" level="project" name="Maven: org.projectlombok:lombok:1.18.6" />
+          <element id="library" level="project" name="Maven: javax.servlet:servlet-api:2.4" />
+          <element id="library" level="project" name="Maven: org.slf4j:slf4j-api:1.7.25" />
+          <element id="library" level="project" name="Maven: org.slf4j:slf4j-simple:1.7.25" />
+        </element>
+      </element>
+    </root>
+  </artifact>
+</component>

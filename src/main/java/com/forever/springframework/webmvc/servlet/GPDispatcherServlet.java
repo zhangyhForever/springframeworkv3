@@ -1,10 +1,10 @@
 package com.forever.springframework.webmvc.servlet;
 
-import com.forever.springframework.webmvc.GPView;
-import lombok.extern.slf4j.Slf4j;
 import com.forever.springframework.annotation.GPController;
 import com.forever.springframework.annotation.GPRequestMapping;
 import com.forever.springframework.context.GPApplicationContext;
+import com.forever.springframework.webmvc.GPView;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -12,13 +12,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Method;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,16 +34,24 @@ public class GPDispatcherServlet extends HttpServlet {
     private List<GPViewResolver> viewResolvers = new ArrayList<GPViewResolver>();
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp){
         doPost(req, resp);
     }
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp){
         try {
             doDispatcher(req, resp);
         } catch (Exception e) {
             e.printStackTrace();
+            try {
+                Map<String, Object> model = new HashMap<String, Object>();
+                model.put("detail", "自己抛的异常");
+                model.put("stackTrace", Arrays.toString(e.getStackTrace()));
+                processDispatchResult(req, resp, new GPModelAndView("500", model));
+            } catch (Exception e1) {
+                e1.printStackTrace();
+            }
         }
     }
 
@@ -200,7 +203,13 @@ public class GPDispatcherServlet extends HttpServlet {
      */
     private void initViewResolvers(GPApplicationContext context) {
         String templateRoot = context.getConfig().getProperty("templateRoot");
-
+        String webInf = new File(this.getClass().getResource("/").getFile()).getParent();
+        templateRoot = webInf+File.separator+templateRoot;
+        log.info("html存储路径=========="+templateRoot);
+        File[] files = new File(templateRoot).listFiles();
+        for(File file: files){
+            viewResolvers.add(new GPViewResolver(templateRoot));
+        }
     }
 
 

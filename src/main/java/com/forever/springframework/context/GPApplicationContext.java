@@ -45,10 +45,13 @@ public class GPApplicationContext extends GPDefaultListableBeanFactory implement
         doRegisterBeanDefinition(beanDefinitions);
 
         //4、把不是懒加载的类提前初始化
+        doCreateBean();
+
+        //5、将初始化过的bean进行依赖注入
         doAutowired();
   }
 
-    private void doAutowired() {
+    private void doCreateBean() {
         for(Map.Entry<String, GPBeanDefinition> beanDefinitionEntry: super.beanDefinitionMap.entrySet()){
             if(!beanDefinitionEntry.getValue().isLazyInit()){
                 getBean(beanDefinitionEntry.getKey());
@@ -59,6 +62,12 @@ public class GPApplicationContext extends GPDefaultListableBeanFactory implement
     private void doRegisterBeanDefinition(List<GPBeanDefinition> beanDefinitions) {
         for(GPBeanDefinition beanDefinition: beanDefinitions){
             super.beanDefinitionMap.put(beanDefinition.getFactoryBeanName(), beanDefinition);
+        }
+    }
+
+    private void doAutowired() {
+        for(Map.Entry<String, GPBeanWrapper> beanWrapperEntry: this.beanWrapperMap.entrySet()){
+            populateBean(beanWrapperEntry.getValue());
         }
     }
 
@@ -81,9 +90,6 @@ public class GPApplicationContext extends GPDefaultListableBeanFactory implement
         this.beanWrapperMap.put(beanName, beanWrapper);
         //实例化后调用一次
         beanPostProcessor.postProcessAfterInitialization(instance, beanName);
-        //2、依赖注入
-        populateBean(beanName, /*beanDefinition,*/ beanWrapper);
-
         //添加前置后置操作，为我们自己留下可操作的空间
         return this.beanWrapperMap.get(beanName).getWrapperInstance();
     }
@@ -114,25 +120,29 @@ public class GPApplicationContext extends GPDefaultListableBeanFactory implement
         return null;
     }
 
-    private void populateBean(String beanName,/* GPBeanDefinition beanDefinition,*/ GPBeanWrapper beanWrapper) {
+    private void populateBean(GPBeanWrapper beanWrapper) {
         Class<?> wrapperClass = beanWrapper.getWrapperClass();
-        if(!wrapperClass.isAnnotationPresent(GPController.class) || !wrapperClass.isAnnotationPresent(GPService.class)){
+        if(!wrapperClass.isAnnotationPresent(GPController.class) && !wrapperClass.isAnnotationPresent(GPService.class)){
             return;
         }
-        Field[] fields = wrapperClass.getFields();
+        Field[] fields = wrapperClass.getDeclaredFields();
         for(Field field: fields){
             if(!field.isAnnotationPresent(GPAutowired.class)){
                 return;
             }
             GPAutowired autowired = field.getAnnotation(GPAutowired.class);
-            String autowiredBeanname = autowired.value().trim();
-            if("".equals(autowiredBeanname)){
+            String beanName = autowired.value().trim();
+            if("".equals(beanName)){
                 beanName = field.getName();
+            }
+            GPBeanWrapper autowiredInstance = this.beanWrapperMap.get(beanName);
+            if(null == autowiredInstance){
+                return;
             }
             field.setAccessible(true);
             try {
-                field.set(beanName, this.beanWrapperMap.get(beanName).getWrapperInstance());
-                log.info(beanName+"注入实例"+this.beanWrapperMap.get(beanName).getWrapperInstance());
+                field.set(beanWrapper.getWrapperInstance(), autowiredInstance.getWrapperInstance());
+                log.info(beanWrapper.getWrapperClass()+"注入实例"+ autowiredInstance.getWrapperInstance());
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }

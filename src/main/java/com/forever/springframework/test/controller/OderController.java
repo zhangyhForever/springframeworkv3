@@ -27,4 +27,9 @@ public class OderController {
         String s = orderService.insertOrder(order);
         System.out.println(s);
     }
+
+    @GPRequestMapping("/exception")
+    public void exception(){
+        throw new RuntimeException("自己故意抛的异常");
+    }
 }

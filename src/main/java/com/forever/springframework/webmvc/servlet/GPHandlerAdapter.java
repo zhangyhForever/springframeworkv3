@@ -30,12 +30,13 @@ public class GPHandlerAdapter {
         Annotation[][] paramAnnotations = method.getParameterAnnotations();
         for(int i=0; i<paramAnnotations.length; i++){
             for(Annotation paramAnnotation: paramAnnotations[i]){
-                if(paramAnnotation.getClass() != GPRequestPram.class){
+                if(!(paramAnnotation instanceof GPRequestPram)){
                     continue;
                 }
                 String paramName = ((GPRequestPram) paramAnnotation).value();
-                if(!"".equals(paramName.trim()))
-                paramMapping.put(paramName, i);
+                if(!"".equals(paramName.trim())){
+                    paramMapping.put(paramName, i);
+                }
             }
         }
 
@@ -50,12 +51,12 @@ public class GPHandlerAdapter {
 
         //用户传过来的参数列表
         Map<String ,String[]> reqParameterMap = req.getParameterMap();
-        Object[] paramValues = new Object[]{};
+        Object[] paramValues = new Object[paramMapping.size()];
         //构造实参列表
         for(Map.Entry<String, String[]> reqParamEntity: reqParameterMap.entrySet()){
             String value = Arrays.toString(reqParamEntity.getValue())
                     .replaceAll("\\[|\\]","").replaceAll("\\s","");
-            if(!paramMapping.containsKey(value)){
+            if(paramMapping.containsKey(value)){
                 continue;
             }
             Integer index = paramMapping.get(reqParamEntity.getKey());
@@ -92,7 +93,7 @@ public class GPHandlerAdapter {
         }else if(Integer.class == parameterType){
             return Integer.valueOf(value);
         }else if(int.class == parameterType){
-            return Integer.valueOf(value).intValue();
+            return Integer.valueOf(value);
         }else {
             if(null != value){
                 return value;

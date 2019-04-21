@@ -19,8 +19,7 @@ public class GPViewResolver {
     private String viewName;
 
     public GPViewResolver(String templateRoot) {
-        String templateRootPath = this.getClass().getClassLoader().getResource(templateRoot).getFile();
-        this.templateRootDir = new File(templateRootPath);
+        this.templateRootDir = new File(templateRoot);
     }
 
     public GPView resolveViewName(String viewName, Locale locale){
@@ -28,7 +27,7 @@ public class GPViewResolver {
             return null;
         }
         this.viewName = viewName.endsWith(DEFAULT_TEMPLATE_SUFFIX)?viewName:(viewName+DEFAULT_TEMPLATE_SUFFIX);
-        File templateFile = new File((templateRootDir.getPath()+"/"+viewName).replaceAll("/+","/"));
+        File templateFile = new File((templateRootDir.getPath()+"/"+this.viewName).replaceAll("/+","/"));
         return new GPView(templateFile);
     }
 

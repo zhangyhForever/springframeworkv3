@@ -26,7 +26,9 @@ public class ActionController {
     @GPRequestMapping(value="/test.do")
     public GPModelAndView test(@GPRequestPram("name") String name){
         Map<String, Object> model = new HashMap<String, Object>();
+        String data = actionService.getName();
+        model.put("data", data);
         model.put("teacher", name);
-        return new GPModelAndView("first.html",model);
+        return new GPModelAndView("first",model);
     }
 }
