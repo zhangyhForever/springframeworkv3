@@ -3,6 +3,11 @@ package com.forever.springframework.context;
 import com.forever.springframework.annotation.GPAutowired;
 import com.forever.springframework.annotation.GPController;
 import com.forever.springframework.annotation.GPService;
+import com.forever.springframework.aop.GPAopProxy;
+import com.forever.springframework.aop.GPCglibAopProxy;
+import com.forever.springframework.aop.GPJdkDynamicAopProxy;
+import com.forever.springframework.aop.config.GPAopConfig;
+import com.forever.springframework.aop.support.GPAdvisedSupport;
 import com.forever.springframework.beans.GPBeanFactory;
 import com.forever.springframework.beans.GPBeanWrapper;
 import com.forever.springframework.beans.config.GPBeanDefinition;
@@ -103,13 +108,21 @@ public class GPApplicationContext extends GPDefaultListableBeanFactory implement
         String className = beanDefinition.getBeanClassName();
         try{
             Object instance = null;
-            Class<?> clazz = Class.forName(className);
-
             //单例直接取出对象
             if(this.singletonBeanCacheMap.containsKey(beanName)){
                 instance = this.singletonBeanCacheMap.get(beanName);
             }else{
+                Class<?> clazz = Class.forName(className);
                 instance = clazz.newInstance();
+
+                //有aop配置的类在此进行配置
+                GPAdvisedSupport config = instantionAopConfig(beanDefinition);
+                if(config.pointCutMatch()){
+                    instance = createProxy(config).getProxy();
+                }
+                config.setTargetClass(clazz);
+                config.setTarget(instance);
+
                 this.singletonBeanCacheMap.put(beanName, instance);
                 log.info(this.getClass()+"创建对象"+instance);
             }
@@ -118,6 +131,31 @@ public class GPApplicationContext extends GPDefaultListableBeanFactory implement
             e.printStackTrace();
         }
         return null;
+    }
+
+    private GPAopProxy createProxy(GPAdvisedSupport config) {
+        Class<?> targetClass = config.getTargetClass();
+        Class<?>[] interfaces = targetClass.getInterfaces();
+        if(interfaces.length > 0) {
+            return new GPJdkDynamicAopProxy(config);
+        }
+        return new GPCglibAopProxy(config);
+    }
+
+    /**
+     * 获取aop的配置信息,并返回配置信息的包装类
+     * @param beanDefinition
+     * @return
+     */
+    private GPAdvisedSupport instantionAopConfig(GPBeanDefinition beanDefinition) {
+        GPAopConfig config = new GPAopConfig();
+        config.setAspectBefore(this.reader.getConfig().getProperty("aspectBefore"));
+        config.setAspectAfter(this.reader.getConfig().getProperty("aspectAfter"));
+        config.setPointCut(this.reader.getConfig().getProperty("pointCut"));
+        config.setAspectAfterThrow(this.reader.getConfig().getProperty("aspectAfterThrow"));
+        config.setAspectClass(this.reader.getConfig().getProperty("aspectClass"));
+        config.setAspectAfterThrowingName(this.reader.getConfig().getProperty("aspectAfterThrowingName"));
+        return new GPAdvisedSupport(config);
     }
 
     private void populateBean(GPBeanWrapper beanWrapper) {

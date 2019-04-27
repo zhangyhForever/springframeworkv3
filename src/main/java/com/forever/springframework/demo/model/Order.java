@@ -1,4 +1,4 @@
-package com.forever.springframework.test.model;
+package com.forever.springframework.demo.model;
 
 /**
  * @Description:

@@ -1,6 +1,6 @@
-package com.forever.springframework.test.service;
+package com.forever.springframework.demo.service;
 
-import com.forever.springframework.test.model.Order;
+import com.forever.springframework.demo.model.Order;
 
 /**
  * @Description:
