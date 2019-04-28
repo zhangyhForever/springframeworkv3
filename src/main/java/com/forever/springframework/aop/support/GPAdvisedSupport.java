@@ -4,6 +4,7 @@ import com.forever.springframework.aop.aspest.BPAfterReturningAdviceInterceptor;
 import com.forever.springframework.aop.aspest.BPAfterThrowingAdviceInterceptor;
 import com.forever.springframework.aop.config.GPAopConfig;
 import com.forever.springframework.aop.aspest.BPMethodBeforeAdviceInterceptor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -18,13 +19,14 @@ import java.util.regex.Pattern;
  * @Author: zhang
  * @Date: 2019/4/26
  */
+@Slf4j
 public class GPAdvisedSupport {
 
     private Class<?> targetClass;
     private Object target;
     private GPAopConfig config;
     private Pattern pointCutClassPattern;
-    private Map<Method, List<Object>> methodCache = new HashMap<Method, List<Object>>();
+    private Map<Method, List<Object>> methodCache;
 
     public GPAdvisedSupport(GPAopConfig config) {
         this.config = config;
@@ -32,6 +34,24 @@ public class GPAdvisedSupport {
 
     public Class<?> getTargetClass(){
         return this.targetClass;
+    }
+
+    public Object getTarget(){
+        return this.target;
+    }
+
+    public void setTarget(Object target) {
+        this.target = target;
+    }
+
+    public List<Object> getInterceptionsAndDynamicInterceptionAdvice(Method method, Class<?> targetClass) throws Exception {
+        List<Object> cached = methodCache.get(method);
+        if(null == cached){
+            Method m = targetClass.getMethod(method.getName(), method.getParameterTypes());
+            cached = methodCache.get(m);
+            methodCache.put(m, cached);
+        }
+        return cached;
     }
 
     public void setTargetClass(Class<?> targetClass) throws InstantiationException, IllegalAccessException {
@@ -43,13 +63,19 @@ public class GPAdvisedSupport {
     private void parse() throws IllegalAccessException, InstantiationException {
         String pointCut = config.getPointCut()
                 .replaceAll("\\.", "\\\\.")
-                .replaceAll("\\.\\*", ".*")
+                .replaceAll("\\\\.\\*", ".*")
                 .replaceAll("\\(", "\\\\(")
                 .replaceAll("\\)", "\\\\)");
-        String pointCutForClassRegex = pointCut.substring(0, pointCut.lastIndexOf("(")-3);
-        pointCutClassPattern = Pattern.compile("class "+pointCutForClassRegex.substring(
-                pointCutForClassRegex.indexOf(" ") + 1));
+        //切入点表达式：pointCut=public .* com\.forever\.springframework\.demo\.service\..*Service..*\(.*\)
+        String pointCutForClassRegex = pointCut.substring(0, pointCut.lastIndexOf("\\(")-4);
 
+        //对切入点类进行正则编译
+        pointCutClassPattern = Pattern.compile("class "+pointCutForClassRegex.substring(
+                pointCutForClassRegex.lastIndexOf(" ") + 1));
+
+        methodCache = new HashMap<Method, List<Object>>();
+
+        //对切入点进行正则编译
         Pattern pattern = Pattern.compile(pointCut);
 
         Class<?> aspectClass = null;
@@ -58,9 +84,9 @@ public class GPAdvisedSupport {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
-        Map<String, Method> aspectMetods = new HashMap<String, Method>();
+        Map<String, Method> aspectMethods = new HashMap<String, Method>();
         for (Method m : aspectClass.getMethods()) {
-            aspectMetods.put(m.getName(), m);
+            aspectMethods.put(m.getName(), m);
         }
 
         for (Method m : this.targetClass.getMethods()) {
@@ -73,21 +99,20 @@ public class GPAdvisedSupport {
                 List<Object> advices = new LinkedList<Object>();
                 //把每一个方法包装成MethodInterceptor
                 //before
-                this.config.getAspectBefore();
                 if(!(null == config.getAspectBefore() || "".equals(config.getAspectBefore()))){
                     advices.add(new BPMethodBeforeAdviceInterceptor(
-                            aspectMetods.get(this.config.getAspectBefore()), aspectClass.newInstance()));
+                            aspectMethods.get(this.config.getAspectBefore()), aspectClass.newInstance()));
                 }
                 //after
                 if(!(null == config.getAspectAfter() || "".equals(config.getAspectAfter()))){
                     advices.add(new BPAfterReturningAdviceInterceptor(
-                            aspectMetods.get(this.config.getAspectAfter()), aspectClass.newInstance()
+                            aspectMethods.get(this.config.getAspectAfter()), aspectClass.newInstance()
                     ));
                 }
                 //afterThrow
                 if(!(null == config.getAspectAfterThrow() || "".equals(config.getAspectAfterThrow()))){
                     BPAfterThrowingAdviceInterceptor afterThrowingAdvice =
-                            new BPAfterThrowingAdviceInterceptor(aspectMetods.get(this.config.getAspectAfterThrow())
+                            new BPAfterThrowingAdviceInterceptor(aspectMethods.get(this.config.getAspectAfterThrow())
                             , aspectClass.newInstance());
                     afterThrowingAdvice.setThrowingName(this.config.getAspectAfterThrowingName());
                     advices.add(afterThrowingAdvice);
@@ -95,23 +120,6 @@ public class GPAdvisedSupport {
                 methodCache.put(m, advices);
             }
         }
-    }
-
-    public Object getTarget(){
-        return this.target;
-    }
-
-    public List<Object> getInterceptorsAndDynammicInterceptionAdvice(Method method, Class<?> targetClass) throws NoSuchMethodException {
-        List<Object> cached = methodCache.get(method);
-        if(null == cached){
-            Method m = targetClass.getMethod(method.getName(), method.getParameterTypes());
-            methodCache.put(m, null);
-        }
-        return cached;
-    }
-
-    public void setTarget(Object target) {
-        this.target = target;
     }
 
     public boolean pointCutMatch() {

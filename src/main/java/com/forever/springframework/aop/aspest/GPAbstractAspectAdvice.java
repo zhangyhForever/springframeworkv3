@@ -19,14 +19,14 @@ public class GPAbstractAspectAdvice implements GPAdvice{
         this.aspectTarget = aspectTarget;
     }
 
-    public  Object invokeAdviceMethod(GPJoinPoint joinPoint, Object returnValue, Throwable tx) throws InvocationTargetException, IllegalAccessException {
+    public  Object invokeAdviceMethod(GPJointPoint joinPoint, Object returnValue, Throwable tx) throws InvocationTargetException, IllegalAccessException {
         Class<?>[] parameterTypes = this.aspectMethod.getParameterTypes();
         if(null == parameterTypes || parameterTypes.length == 0){
             return this.aspectMethod.invoke(aspectTarget);
         }else{
             Object[] args = new Object[parameterTypes.length];
             for(int i=0; i<parameterTypes.length; i++){
-                if(parameterTypes[i] == GPJoinPoint.class){
+                if(parameterTypes[i] == GPJointPoint.class){
                     args[i] = joinPoint;
                 }else if(parameterTypes[i] == Throwable.class){
                     args[i] = tx;

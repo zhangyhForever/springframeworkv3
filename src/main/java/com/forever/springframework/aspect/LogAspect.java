@@ -1,6 +1,6 @@
 package com.forever.springframework.aspect;
 
-import com.forever.springframework.aop.aspest.GPJoinPoint;
+import com.forever.springframework.aop.aspest.GPJointPoint;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
@@ -13,7 +13,7 @@ import java.util.Arrays;
 @Slf4j
 public class LogAspect {
 
-    public void before(GPJoinPoint joinPoint){
+    public void before(GPJointPoint joinPoint){
         //记录方法开始执行时间
         log.info("Invoker Before Method :"+ joinPoint.getMethod() +
             "\nTargetObject:" + joinPoint.getThis() +
@@ -21,7 +21,7 @@ public class LogAspect {
         joinPoint.setUserAttribute("startTime_" + joinPoint.getMethod().getName(), System.currentTimeMillis());
     }
 
-    public void after(GPJoinPoint joinPoint){
+    public void after(GPJointPoint joinPoint){
         //系统当前时间-方法开始执行时间=方法执行的时间
         log.info("Invoker After Method :"+ joinPoint.getMethod() +
                 "\nTargetObject:" + joinPoint.getThis() +
@@ -31,7 +31,7 @@ public class LogAspect {
         System.out.println("user time:" + (endTime - startTime));
     }
 
-    public void afterThrowing(GPJoinPoint joinPoint, Throwable ex){
+    public void afterThrowing(GPJointPoint joinPoint, Throwable ex){
         //异常检测，可以拿到异常信息
         log.info("出现异常 :" +
                 "\nTargetObject:" + joinPoint.getThis() +

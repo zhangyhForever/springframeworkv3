@@ -14,8 +14,11 @@ import com.forever.springframework.beans.config.GPBeanDefinition;
 import com.forever.springframework.beans.config.GPBeanPostProcessor;
 import com.forever.springframework.beans.support.GPBeanDefinitionReader;
 import com.forever.springframework.beans.support.GPDefaultListableBeanFactory;
+import com.forever.springframework.demo.service.IOrderService;
 import lombok.extern.slf4j.Slf4j;
+import sun.misc.ProxyGenerator;
 
+import java.io.FileOutputStream;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
@@ -116,15 +119,15 @@ public class GPApplicationContext extends GPDefaultListableBeanFactory implement
                 instance = clazz.newInstance();
 
                 //有aop配置的类在此进行配置
-                GPAdvisedSupport config = instantionAopConfig(beanDefinition);
-                if(config.pointCutMatch()){
-                    instance = createProxy(config).getProxy();
+                GPAdvisedSupport advice = instantionAopConfig();
+                advice.setTargetClass(clazz);
+                advice.setTarget(instance);
+                if(advice.pointCutMatch()){
+                    instance = createProxy(advice).getProxy();
+//                    log.info(config.getTargetClass()+"匹配成功，生成代理对象："+instance);
                 }
-                config.setTargetClass(clazz);
-                config.setTarget(instance);
-
                 this.singletonBeanCacheMap.put(beanName, instance);
-                log.info(this.getClass()+"创建对象"+instance);
+                log.info("创建对象"+instance);
             }
             return instance;
         } catch (Exception e){
@@ -144,10 +147,9 @@ public class GPApplicationContext extends GPDefaultListableBeanFactory implement
 
     /**
      * 获取aop的配置信息,并返回配置信息的包装类
-     * @param beanDefinition
      * @return
      */
-    private GPAdvisedSupport instantionAopConfig(GPBeanDefinition beanDefinition) {
+    private GPAdvisedSupport instantionAopConfig() {
         GPAopConfig config = new GPAopConfig();
         config.setAspectBefore(this.reader.getConfig().getProperty("aspectBefore"));
         config.setAspectAfter(this.reader.getConfig().getProperty("aspectAfter"));

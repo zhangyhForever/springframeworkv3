@@ -13,7 +13,7 @@ import java.lang.reflect.Method;
  */
 public class BPAfterReturningAdviceInterceptor extends GPAbstractAspectAdvice implements GPAdvice, GPMethodInterceptor {
 
-    private GPJoinPoint joinPoint;
+    private GPJointPoint joinPoint;
 
     public BPAfterReturningAdviceInterceptor(Method aspectMethod, Object aspectTarget) {
         super(aspectMethod, aspectTarget);

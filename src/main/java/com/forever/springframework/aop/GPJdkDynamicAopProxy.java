@@ -15,25 +15,27 @@ import java.util.List;
  */
 public class GPJdkDynamicAopProxy implements GPAopProxy, InvocationHandler {
 
-    private GPAdvisedSupport advised;
+    private GPAdvisedSupport config;
 
     public GPJdkDynamicAopProxy(GPAdvisedSupport config){
-        this.advised = config;
+        this.config = config;
     }
 
     public Object getProxy() {
-        return getProxy(this.advised.getTargetClass().getClassLoader());
+        ClassLoader classLoader = this.config.getTargetClass().getClassLoader();
+        return getProxy(classLoader);
     }
 
     public Object getProxy(ClassLoader classLoader) {
-        return Proxy.newProxyInstance(classLoader, this.advised.getTargetClass().getInterfaces(), this);
+        Class<?>[] interfaces = this.config.getTargetClass().getInterfaces();
+        return Proxy.newProxyInstance(classLoader, interfaces, this);
     }
 
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        List<Object> interceptiorsAndDynamicMethodMatchers = advised.getInterceptorsAndDynammicInterceptionAdvice(method, this.advised.getTargetClass());
+        List<Object> interceptionsAndDynamicMethodMatchers = config.getInterceptionsAndDynamicInterceptionAdvice(method, this.config.getTargetClass());
         GPMethodInvocation invocation = new GPMethodInvocation(
-                proxy, null, method, args,
-                advised.getTargetClass(), interceptiorsAndDynamicMethodMatchers);
+                proxy, config.getTarget(), method, args,
+                config.getTargetClass(), interceptionsAndDynamicMethodMatchers);
         return invocation.proceed();
     }
 }
