@@ -66,7 +66,7 @@ public class GPAdvisedSupport {
                 .replaceAll("\\\\.\\*", ".*")
                 .replaceAll("\\(", "\\\\(")
                 .replaceAll("\\)", "\\\\)");
-        //切入点表达式：pointCut=public .* com\.forever\.springframework\.demo\.service\..*Service..*\(.*\)
+        //切入点表达式：pointCut=public .* com\.forever\.springframework\.demo\.service\..*Service\..*\(.*\)
         String pointCutForClassRegex = pointCut.substring(0, pointCut.lastIndexOf("\\(")-4);
 
         //对切入点类进行正则编译

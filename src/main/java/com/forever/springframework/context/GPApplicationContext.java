@@ -1,5 +1,6 @@
 package com.forever.springframework.context;
 
+import com.forever.demo.service.IOrderService;
 import com.forever.springframework.annotation.GPAutowired;
 import com.forever.springframework.annotation.GPController;
 import com.forever.springframework.annotation.GPService;
@@ -14,11 +15,12 @@ import com.forever.springframework.beans.config.GPBeanDefinition;
 import com.forever.springframework.beans.config.GPBeanPostProcessor;
 import com.forever.springframework.beans.support.GPBeanDefinitionReader;
 import com.forever.springframework.beans.support.GPDefaultListableBeanFactory;
-import com.forever.springframework.demo.service.IOrderService;
 import lombok.extern.slf4j.Slf4j;
 import sun.misc.ProxyGenerator;
 
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
@@ -124,7 +126,6 @@ public class GPApplicationContext extends GPDefaultListableBeanFactory implement
                 advice.setTarget(instance);
                 if(advice.pointCutMatch()){
                     instance = createProxy(advice).getProxy();
-//                    log.info(config.getTargetClass()+"匹配成功，生成代理对象："+instance);
                 }
                 this.singletonBeanCacheMap.put(beanName, instance);
                 log.info("创建对象"+instance);
